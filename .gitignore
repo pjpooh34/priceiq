@@ -1,0 +1,28 @@
+# Frontend (Vite/Node)
+node_modules/
+.dist/
+dist/
+.build/
+.next/
+.nextcache/
+.vscode/
+.DS_Store
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+pnpm-debug.log*
+*.local
+
+# Env
+.env
+.env.*
+server/.env
+
+# Build outputs
+server/dist/
+server/node_modules/
+
+# Misc
+.vercel/
+.netlify/
+**/.DS_Store
