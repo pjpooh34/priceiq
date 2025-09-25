@@ -3,14 +3,18 @@ import { Button } from "./ui/button";
 import { Card, CardContent } from "./ui/card";
 import { TrendingUp, Shield, Zap, PlayCircle } from "lucide-react";
 import { CustomerTestimonials } from "./CustomerTestimonials";
+import { useState } from "react";
+import { DemoModal } from "./DemoModal";
 
 interface HeroSectionProps {
   onAnalyzeQuote: () => void;
   onGetEstimate: () => void;
   onSeeFeatures?: () => void;
+  onDemoComplete?: (result: any) => void;
 }
 
-export function HeroSection({ onAnalyzeQuote, onGetEstimate, onSeeFeatures }: HeroSectionProps) {
+export function HeroSection({ onAnalyzeQuote, onGetEstimate, onSeeFeatures, onDemoComplete }: HeroSectionProps) {
+  const [demoOpen, setDemoOpen] = useState(false);
   return (
     <section className="py-20 bg-gradient-to-b from-background via-accent/10 to-primary/5 relative overflow-hidden">
       {/* Animated background decoration */}
@@ -124,6 +128,13 @@ export function HeroSection({ onAnalyzeQuote, onGetEstimate, onSeeFeatures }: He
                   <PlayCircle className="h-4 w-4 mr-2" />
                   See How It Works
                 </Button>
+                <Button
+                  variant="outline"
+                  onClick={() => setDemoOpen(true)}
+                  className="ml-3"
+                >
+                  Try Live Demo
+                </Button>
               </motion.div>
             )}
 
@@ -233,6 +244,7 @@ export function HeroSection({ onAnalyzeQuote, onGetEstimate, onSeeFeatures }: He
             </Button>
           </motion.div>
         )}
+        <DemoModal open={demoOpen} onClose={() => setDemoOpen(false)} onComplete={onDemoComplete} />
       </div>
     </section>
   );

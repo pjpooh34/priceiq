@@ -20,6 +20,7 @@ import { mockAnalyzeService, mockAnalyzeQuote } from "./components/mockAiService
 import { Account } from "./components/Account";
 import { useAuth } from "./auth/AuthProvider";
 import { Toaster, toast } from "sonner";
+import { GuidedTour } from "./components/GuidedTour";
 
 type AppState = "landing" | "features" | "pricing" | "signup" | "account" | "intake-method" | "paper-scan" | "email-forward" | "text-submit" | "portal-link" | "phone-entry" | "quote-upload" | "form" | "results";
 
@@ -67,6 +68,7 @@ function AppContent() {
   const [currentState, setCurrentState] = useState<AppState>("landing");
   const [loading, setLoading] = useState(false);
   const [results, setResults] = useState<ResultsData | null>(null);
+  const [tourOpen, setTourOpen] = useState(false);
 
   const handleAnalyzeQuote = () => {
     setCurrentState("intake-method");
@@ -111,6 +113,17 @@ function AppContent() {
 
   const handleViewPricing = () => {
     setCurrentState("pricing");
+  };
+
+  const handleDemoComplete = (demoResult: any) => {
+    // Map demo result to ResultsData shape and show full results view
+    setResults(demoResult);
+    setCurrentState("results");
+    // Auto-open tour the first time
+    if (!localStorage.getItem("tour_results_seen")) {
+      setTourOpen(true);
+      localStorage.setItem("tour_results_seen", "1");
+    }
   };
 
   const handleSelectPlan = (planId: string) => {
@@ -250,6 +263,7 @@ function AppContent() {
                   onAnalyzeQuote={handleAnalyzeQuote} 
                   onGetEstimate={handleGetEstimate}
                   onSeeFeatures={handleSeeFeatures}
+                  onDemoComplete={handleDemoComplete}
                 />
                 <PricingPreview 
                   onViewAllPlans={handleViewPricing}
@@ -475,6 +489,7 @@ function AppContent() {
               transition={pageTransition}
               className="max-w-7xl mx-auto"
             >
+              <GuidedTour open={tourOpen} onClose={() => setTourOpen(false)} />
               {results.quoteAnalysis ? (
                 <EnhancedQuoteResults 
                   results={{
