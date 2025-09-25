@@ -21,6 +21,9 @@ import { Account } from "./components/Account";
 import { useAuth } from "./auth/AuthProvider";
 import { Toaster, toast } from "sonner";
 import { GuidedTour } from "./components/GuidedTour";
+import { hasTrialCredits, consumeTrialCredit, getTrialCredits } from "./lib/trial";
+import { AuthModal } from "./components/auth/AuthModal";
+import { TrialBanner } from "./components/TrialBanner";
 
 type AppState = "landing" | "features" | "pricing" | "signup" | "account" | "intake-method" | "paper-scan" | "email-forward" | "text-submit" | "portal-link" | "phone-entry" | "quote-upload" | "form" | "results";
 
@@ -64,11 +67,12 @@ export default function App() {
 }
 
 function AppContent() {
-  const { plan } = useAuth();
+  const { plan, status } = useAuth();
   const [currentState, setCurrentState] = useState<AppState>("landing");
   const [loading, setLoading] = useState(false);
   const [results, setResults] = useState<ResultsData | null>(null);
   const [tourOpen, setTourOpen] = useState(false);
+  const [authOpen, setAuthOpen] = useState(false);
 
   const handleAnalyzeQuote = () => {
     setCurrentState("intake-method");
@@ -140,9 +144,14 @@ function AppContent() {
   };
 
   const handleQuoteSubmit = async (data: QuoteUploadData) => {
+    if (status !== 'authenticated' && !hasTrialCredits()) {
+      toast("Create an account to continue", { description: "Your free trial is used up. Continue free by creating an account.", action: { label: "Sign up", onClick: () => setAuthOpen(true) } });
+      return;
+    }
     setLoading(true);
     try {
       const analysisResults = await mockAnalyzeQuote(data);
+      if (status !== 'authenticated') consumeTrialCredit();
       setResults(analysisResults);
       setCurrentState("results");
     } catch (error) {
@@ -181,9 +190,14 @@ function AppContent() {
   };
 
   const handleFormSubmit = async (data: ServiceRequestData) => {
+    if (status !== 'authenticated' && !hasTrialCredits()) {
+      toast("Create an account to continue", { description: "Your free trial is used up. Continue free by creating an account.", action: { label: "Sign up", onClick: () => setAuthOpen(true) } });
+      return;
+    }
     setLoading(true);
     try {
       const analysisResults = await mockAnalyzeService(data);
+      if (status !== 'authenticated') consumeTrialCredit();
       setResults(analysisResults);
       setCurrentState("results");
     } catch (error) {
@@ -491,6 +505,9 @@ function AppContent() {
               className="max-w-7xl mx-auto"
             >
               <GuidedTour open={tourOpen} onClose={() => setTourOpen(false)} />
+              {status !== 'authenticated' && (
+                <TrialBanner creditsLeft={getTrialCredits()} onSignup={() => setAuthOpen(true)} />
+              )}
               {results.quoteAnalysis ? (
                 <EnhancedQuoteResults 
                   results={{
@@ -505,14 +522,14 @@ function AppContent() {
                     timeAnalyzed: 12,
                     sourceCount: 2184,
                     redFlags: results.quoteAnalysis.redFlags || [],
-                    lineItems: results.quoteAnalysis.lineItems?.map(item => ({
+                    lineItems: (status === 'authenticated' ? results.quoteAnalysis.lineItems : results.quoteAnalysis.lineItems?.slice(0,2))?.map(item => ({
                       item: item.description,
                       quoted: item.amount,
                       typical: item.amount * 0.9, // Mock typical price
                       status: item.amount > item.amount * 1.1 ? "high" : "fair" as "fair" | "high" | "low"
                     })) || [],
                     savings: Math.max(0, results.quoteAnalysis.totalAmount - results.priceRange.high),
-                    negotiationScripts: results.negotiationScript,
+                    negotiationScripts: status === 'authenticated' ? results.negotiationScript : { friendly: results.negotiationScript.friendly, professional: "Sign up to unlock", firm: "Sign up to unlock" },
                     tips: results.tips
                   }}
                   onNewAnalysis={handleNewAnalysis} 
@@ -588,6 +605,7 @@ function AppContent() {
         </div>
       </motion.footer>
       <Toaster position="top-center" richColors />
+      <AuthModal open={authOpen} onClose={() => setAuthOpen(false)} />
     </div>
   );
 }
