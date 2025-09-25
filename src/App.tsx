@@ -102,6 +102,7 @@ function AppContent() {
   };
 
   const handleAccount = () => setCurrentState("account");
+  const handleUpgrade = () => setCurrentState("pricing");
 
   const handleGetEstimate = () => {
     setCurrentState("form");
@@ -283,7 +284,7 @@ function AppContent() {
               transition={pageTransition}
               className="max-w-7xl mx-auto"
             >
-              <Account onBack={handleBackToHome} />
+              <Account onBack={handleBackToHome} onUpgrade={handleUpgrade} />
             </motion.div>
           )}
 
@@ -359,7 +360,7 @@ function AppContent() {
               transition={pageTransition}
               className="max-w-7xl mx-auto"
             >
-              <QuoteIntakeMethod onMethodSelect={handleMethodSelect} />
+              <QuoteIntakeMethod onMethodSelect={handleMethodSelect} plan={plan} onUpgrade={() => setCurrentState('pricing')} />
             </motion.div>
           )}
 

@@ -14,9 +14,11 @@ import {
 
 interface QuoteIntakeMethodProps {
   onMethodSelect: (method: string) => void;
+  plan?: 'free' | 'homeowner' | 'family' | 'pro' | 'enterprise';
+  onUpgrade?: () => void;
 }
 
-export function QuoteIntakeMethod({ onMethodSelect }: QuoteIntakeMethodProps) {
+export function QuoteIntakeMethod({ onMethodSelect, plan = 'free', onUpgrade }: QuoteIntakeMethodProps) {
   const methods = [
     {
       id: "paper",
@@ -102,23 +104,31 @@ export function QuoteIntakeMethod({ onMethodSelect }: QuoteIntakeMethodProps) {
       <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
         {methods.map((method, index) => {
           const Icon = method.icon;
+          const locked = plan === 'free';
           return (
             <motion.div
               key={method.id}
               initial={{ opacity: 0, y: 30 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ duration: 0.6, delay: index * 0.1 }}
-              whileHover={{ scale: 1.02, y: -5 }}
-              whileTap={{ scale: 0.98 }}
-              className="group cursor-pointer"
-              onClick={() => onMethodSelect(method.id)}
+              whileHover={{ scale: locked ? 1.0 : 1.02, y: locked ? 0 : -5 }}
+              whileTap={{ scale: locked ? 1.0 : 0.98 }}
+              className={`group ${locked ? 'cursor-not-allowed' : 'cursor-pointer'}`}
+              onClick={() => (locked ? onUpgrade?.() : onMethodSelect(method.id))}
             >
-              <Card className="glass-card hover:shadow-xl transition-all duration-300 group-hover:border-primary/30 h-full relative overflow-hidden">
+              <Card className={`glass-card transition-all duration-300 h-full relative overflow-hidden ${locked ? 'opacity-80' : 'hover:shadow-xl group-hover:border-primary/30'}`}>
                 {method.popular && (
                   <div className="absolute top-3 right-3">
                     <Badge variant="secondary" className="bg-primary/20 text-primary border-primary/30">
                       {method.badge}
                     </Badge>
+                  </div>
+                )}
+                {locked && (
+                  <div className="absolute inset-0 bg-background/60 backdrop-blur-[1px] flex items-center justify-center">
+                    <div className="text-sm">
+                      <span className="px-2 py-1 rounded bg-primary/10 text-primary border border-primary/20">Upgrade to unlock</span>
+                    </div>
                   </div>
                 )}
                 

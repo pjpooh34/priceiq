@@ -6,7 +6,7 @@ import { Button } from './ui/button';
 import { Badge } from './ui/badge';
 import { User, CreditCard, LogOut } from 'lucide-react';
 
-export function Account({ onBack }: { onBack?: () => void }) {
+export function Account({ onBack, onUpgrade }: { onBack?: () => void; onUpgrade?: () => void }) {
   const { user, plan, logout } = useAuth();
   const [loading, setLoading] = useState(false);
 
@@ -49,6 +49,11 @@ export function Account({ onBack }: { onBack?: () => void }) {
               <LogOut className="h-4 w-4 mr-2" />
               Sign Out
             </Button>
+            {plan === 'free' && (
+              <Button variant="secondary" onClick={onUpgrade}>
+                Upgrade Plan
+              </Button>
+            )}
             {onBack && (
               <Button variant="ghost" onClick={onBack}>Back</Button>
             )}
@@ -62,4 +67,3 @@ export function Account({ onBack }: { onBack?: () => void }) {
     </div>
   );
 }
-
