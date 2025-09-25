@@ -24,5 +24,8 @@ Local Dev
 1) Backend: `cd server && npm i && npx prisma generate && npx prisma migrate dev --name init && npm run dev`
 2) Frontend: `npm i && npm run dev` (http://localhost:5173)
 
+Production URL
+- https://web-rose-six-25.vercel.app/
+
 Stripe Test
 - Choose a paid plan → Checkout → success → header shows updated plan after webhook
