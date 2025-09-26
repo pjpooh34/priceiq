@@ -4,6 +4,7 @@ import { Card } from './ui/card';
 import { Button } from './ui/button';
 import { Progress } from './ui/progress';
 import { mockAnalyzeQuote } from './mockAiService';
+import { OcrScan } from './OcrScan';
 import { CheckCircle2, Loader2, Upload } from 'lucide-react';
 
 type Step = 'idle' | 'uploading' | 'analyzing' | 'result';
@@ -12,6 +13,7 @@ export function DemoModal({ open, onClose, onComplete }: { open: boolean; onClos
   const [step, setStep] = useState<Step>('idle');
   const [progress, setProgress] = useState(0);
   const [result, setResult] = useState<any>(null);
+  const [previewUrl, setPreviewUrl] = useState<string | null>(null);
   const inputRef = useRef<HTMLInputElement>(null);
 
   useEffect(() => {
@@ -25,6 +27,10 @@ export function DemoModal({ open, onClose, onComplete }: { open: boolean; onClos
   const startFlow = async (file: File) => {
     setStep('uploading');
     setProgress(0);
+    try {
+      const url = URL.createObjectURL(file);
+      setPreviewUrl(url);
+    } catch {}
     // Fake upload progress
     await new Promise<void>((resolve) => {
       const start = Date.now();
@@ -99,13 +105,18 @@ export function DemoModal({ open, onClose, onComplete }: { open: boolean; onClos
           )}
 
           {step !== 'idle' && step !== 'result' && (
-            <div className="space-y-6">
-              <div className="flex items-center gap-3">
-                {step === 'uploading' ? <Upload className="h-4 w-4 text-primary" /> : <Loader2 className="h-4 w-4 text-primary animate-spin" />}
-                <div className="font-medium">{step === 'uploading' ? 'Uploading quote…' : 'Analyzing quote…'}</div>
+            <div className="grid md:grid-cols-2 gap-6 items-center">
+              <div className="space-y-3">
+                <div className="flex items-center gap-3">
+                  {step === 'uploading' ? <Upload className="h-4 w-4 text-primary" /> : <Loader2 className="h-4 w-4 text-primary animate-spin" />}
+                  <div className="font-medium">{step === 'uploading' ? 'Uploading quote…' : 'Scanning quote…'}</div>
+                </div>
+                <Progress value={progress} />
+                <div className="text-sm text-muted-foreground">Steps: OCR → Market comparison → Scripts</div>
               </div>
-              <Progress value={progress} />
-              <div className="text-sm text-muted-foreground">Steps: OCR → Market comparison → Scripts</div>
+              <div>
+                <OcrScan imageUrl={previewUrl || 'https://images.unsplash.com/photo-1554224155-cfa08c2a758f?auto=format&fit=crop&w=1080&q=80'} />
+              </div>
             </div>
           )}
 

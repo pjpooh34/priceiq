@@ -28,6 +28,7 @@ import { CustomerTestimonials } from "./CustomerTestimonials";
 import { DemoModal } from "./DemoModal";
 import { mockAnalyzeQuote } from "./mockAiService";
 import { Progress } from "./ui/progress";
+import { OcrScan } from "./OcrScan";
 
 interface FeaturesDemoProps {
   onGetStarted: () => void;
@@ -46,6 +47,7 @@ export function FeaturesDemo({ onGetStarted, onDemoComplete }: FeaturesDemoProps
     setPreview(null);
     setLoading(true);
     setProgress(0);
+    try { setPreviewUrl(URL.createObjectURL(file)); } catch {}
     await new Promise<void>((resolve) => {
       const start = Date.now();
       const timer = setInterval(() => {
@@ -71,6 +73,7 @@ export function FeaturesDemo({ onGetStarted, onDemoComplete }: FeaturesDemoProps
     const file = new File([blob], 'sample-quote.jpg', { type: 'image/jpeg' });
     runInlineDemo(file);
   }
+  const [previewUrl, setPreviewUrl] = useState<string | null>(null);
 
   const features = [
     {
@@ -306,7 +309,10 @@ export function FeaturesDemo({ onGetStarted, onDemoComplete }: FeaturesDemoProps
                       </div>
                       <div className="space-y-4">
                         <h4 className="font-medium">Result Preview</h4>
-                        <Card className="p-4">
+                        {loading ? (
+                          <OcrScan imageUrl={previewUrl || 'https://images.unsplash.com/photo-1554224155-cfa08c2a758f?auto=format&fit=crop&w=1080&q=80'} />
+                        ) : (
+                          <Card className="p-4">
                           {preview ? (
                             <div className="space-y-2 text-sm">
                               <div className="text-muted-foreground">Fair price range</div>
@@ -328,6 +334,7 @@ export function FeaturesDemo({ onGetStarted, onDemoComplete }: FeaturesDemoProps
                             <div className="text-muted-foreground">Run the demo to see a live preview.</div>
                           )}
                         </Card>
+                        )}
                       </div>
                     </div>
                   ) : (
