@@ -312,7 +312,7 @@ function AppContent() {
               transition={pageTransition}
               className="max-w-7xl mx-auto"
             >
-              <FeaturesDemo onGetStarted={handleAnalyzeQuote} />
+              <FeaturesDemo onGetStarted={handleAnalyzeQuote} onDemoComplete={handleDemoComplete} />
             </motion.div>
           )}
 

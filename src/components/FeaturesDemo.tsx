@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useRef, useState } from "react";
 import { motion } from "motion/react";
 import { Button } from "./ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "./ui/card";
@@ -19,17 +19,58 @@ import {
   Phone,
   ArrowRight,
   PlayCircle,
-  Zap
+  Zap,
+  Upload,
+  CheckCircle2
 } from "lucide-react";
 import { ImageWithFallback } from "./figma/ImageWithFallback";
 import { CustomerTestimonials } from "./CustomerTestimonials";
+import { DemoModal } from "./DemoModal";
+import { mockAnalyzeQuote } from "./mockAiService";
+import { Progress } from "./ui/progress";
 
 interface FeaturesDemoProps {
   onGetStarted: () => void;
+  onDemoComplete?: (result: any) => void;
 }
 
-export function FeaturesDemo({ onGetStarted }: FeaturesDemoProps) {
+export function FeaturesDemo({ onGetStarted, onDemoComplete }: FeaturesDemoProps) {
   const [activeDemo, setActiveDemo] = useState("paper");
+  const [demoOpen, setDemoOpen] = useState(false);
+  const inputRef = useRef<HTMLInputElement>(null);
+  const [loading, setLoading] = useState(false);
+  const [progress, setProgress] = useState(0);
+  const [preview, setPreview] = useState<any | null>(null);
+
+  async function runInlineDemo(file: File) {
+    setPreview(null);
+    setLoading(true);
+    setProgress(0);
+    await new Promise<void>((resolve) => {
+      const start = Date.now();
+      const timer = setInterval(() => {
+        const pct = Math.min(100, Math.round(((Date.now() - start) / 800) * 100));
+        setProgress(pct);
+        if (pct >= 100) { clearInterval(timer); resolve(); }
+      }, 60);
+    });
+    const data = await mockAnalyzeQuote({ quotePhoto: file, zipCode: '28202', contractorName: 'Sample Contractor' });
+    setPreview({
+      service: data.service,
+      priceRange: data.priceRange,
+      quoted: data.quoteAnalysis?.totalAmount,
+      assessment: data.quoteAnalysis?.overallAssessment,
+      savings: data.quoteAnalysis?.potentialSavings ?? 0,
+      items: data.quoteAnalysis?.lineItems?.slice(0, 2) || [],
+    });
+    setLoading(false);
+  }
+
+  function useSample() {
+    const blob = new Blob([new Uint8Array([1,2,3])], { type: 'application/octet-stream' });
+    const file = new File([blob], 'sample-quote.jpg', { type: 'image/jpeg' });
+    runInlineDemo(file);
+  }
 
   const features = [
     {
@@ -240,54 +281,77 @@ export function FeaturesDemo({ onGetStarted }: FeaturesDemoProps) {
               
               {Object.entries(demoScreenshots).map(([key, demo]) => (
                 <TabsContent key={key} value={key} className="mt-0">
-                  <div className="space-y-8">
-                    <div className="text-center">
-                      <h3 className="text-xl font-medium mb-2">{demo.title}</h3>
-                      <p className="text-muted-foreground">
-                        Follow the simple 3-step process below
-                      </p>
-                    </div>
-                    
-                    <div className="grid md:grid-cols-3 gap-8">
-                      {demo.steps.map((step, index) => (
-                        <motion.div
-                          key={index}
-                          initial={{ opacity: 0, y: 20 }}
-                          animate={{ opacity: 1, y: 0 }}
-                          transition={{ delay: index * 0.1 }}
-                          className="text-center group"
-                        >
-                          <div className="relative mb-6">
-                            <div className="aspect-[4/3] rounded-xl overflow-hidden shadow-lg group-hover:shadow-xl transition-shadow">
-                              <ImageWithFallback
-                                src={
-                                  activeDemo === "paper" && index === 0 ? "https://images.unsplash.com/photo-1554224155-cfa08c2a758f?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3Nzg4Nzd8MHwxfHNlYXJjaHwxfHxjb250cmFjdG9yJTIwcXVvdGUlMjBkb2N1bWVudCUyMHBhcGVyfGVufDF8fHx8MTc1NjkyOTIxNXww&ixlib=rb-4.1.0&q=80&w=1080" :
-                                  activeDemo === "paper" && index === 1 ? "https://images.unsplash.com/photo-1708728428881-888b46603534?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3Nzg4Nzd8MHwxfHNlYXJjaHwxfHxtb2JpbGUlMjBwaG9uZSUyMHNjYW5uaW5nJTIwZG9jdW1lbnR8ZW58MXx8fHwxNzU2OTI5MjE5fDA&ixlib=rb-4.1.0&q=80&w=1080" :
-                                  activeDemo === "paper" && index === 2 ? "https://images.unsplash.com/photo-1748609160056-7b95f30041f0?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3Nzg4Nzd8MHwxfHNlYXJjaHwxfHxkYXRhJTIwYW5hbHlzaXMlMjBjaGFydHMlMjBkYXNoYm9hcmR8ZW58MXx8fHwxNzU2OTI5MjIzfDA&ixlib=rb-4.1.0&q=80&w=1080" :
-                                  activeDemo === "email" && index === 0 ? "https://images.unsplash.com/photo-1683117927786-f146451082fb?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3Nzg4Nzd8MHwxfHNlYXJjaHwxfHxlbWFpbCUyMGluYm94JTIwaW50ZXJmYWNlfGVufDF8fHx8MTc1NjkyOTIyOXww&ixlib=rb-4.1.0&q=80&w=1080" :
-                                  activeDemo === "email" && index === 1 ? "https://images.unsplash.com/photo-1683117927786-f146451082fb?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3Nzg4Nzd8MHwxfHNlYXJjaHwxfHxlbWFpbCUyMGZvcndhcmRpbmclMjBub3RpZmljYXRpb258ZW58MXx8fHwxNzU2OTI5MjMzfDA&ixlib=rb-4.1.0&q=80&w=1080" :
-                                  activeDemo === "text" && index === 0 ? "https://images.unsplash.com/photo-1646766677899-9c1750e28b0f?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3Nzg4Nzd8MHwxfHNlYXJjaHwxfHx0ZXh0JTIwbWVzc2FnZSUyMGNvbnZlcnNhdGlvbiUyMG1vYmlsZXxlbnwxfHx8fDE3NTY5MjkyMzd8MA&ixlib=rb-4.1.0&q=80&w=1080" :
-                                  activeDemo === "text" && index === 1 ? "https://images.unsplash.com/photo-1694878982093-25e8897ec9d5?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3Nzg4Nzd8MHwxfHNlYXJjaHwxfHxtb2JpbGUlMjBhcHAlMjBpbnRlcmZhY2UlMjBzY3JlZW58ZW58MXx8fHwxNzU2OTI5MjQ0fDA&ixlib=rb-4.1.0&q=80&w=1080" :
-                                  activeDemo === "results" && index === 0 ? "https://images.unsplash.com/photo-1660970781103-ba6749cb9ce3?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3Nzg4Nzd8MHwxfHNlYXJjaHwxfHxwcmljZSUyMGNvbXBhcmlzb24lMjBjaGFydCUyMGZpbmFuY2lhbHxlbnwxfHx8fDE3NTY5MjkyNTB8MA&ixlib=rb-4.1.0&q=80&w=1080" :
-                                  "https://images.unsplash.com/photo-1748609160056-7b95f30041f0?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3Nzg4Nzd8MHwxfHNlYXJjaHwxfHxkYXRhJTIwYW5hbHlzaXMlMjBjaGFydHMlMjBkYXNoYm9hcmR8ZW58MXx8fHwxNzU2OTI5MjIzfDA&ixlib=rb-4.1.0&q=80&w=1080"
-                                }
-                                alt={step.image}
-                                className="w-full h-full object-cover"
-                              />
-                            </div>
-                            <div className="absolute -top-3 -left-3 w-8 h-8 bg-primary text-primary-foreground rounded-full flex items-center justify-center font-medium text-sm shadow-lg">
-                              {index + 1}
-                            </div>
+                  {key === 'paper' || key === 'results' ? (
+                    <div className="grid md:grid-cols-2 gap-8 items-start">
+                      <div className="space-y-4">
+                        <h3 className="text-xl font-medium">{key === 'paper' ? 'Upload a Quote' : 'Run the Demo'}</h3>
+                        <div className="p-6 rounded-xl border border-dashed text-center bg-muted/30">
+                          <Upload className="h-8 w-8 mx-auto mb-3 text-primary" />
+                          <p className="mb-4">Upload your quote or use our sample</p>
+                          <div className="flex gap-3 justify-center">
+                            <Button variant="outline" onClick={() => inputRef.current?.click()}>Upload</Button>
+                            <Button onClick={useSample}>Use sample</Button>
+                            <input ref={inputRef} type="file" accept="image/*,.pdf" className="hidden" onChange={(e) => { const f=e.target.files?.[0]; if (f) runInlineDemo(f); }} />
                           </div>
-                          
-                          <h4 className="text-lg font-medium mb-2">{step.title}</h4>
-                          <p className="text-muted-foreground text-sm leading-relaxed">
-                            {step.description}
-                          </p>
-                        </motion.div>
-                      ))}
+                        </div>
+                        {(loading || preview) && (
+                          <div className="space-y-3">
+                            <div className="flex items-center gap-2">
+                              {loading ? <Upload className="h-4 w-4 text-primary" /> : <CheckCircle2 className="h-4 w-4 text-success" />}
+                              <div className="text-sm font-medium">{loading ? 'Analyzing your quote…' : 'Analysis complete'}</div>
+                            </div>
+                            <Progress value={progress} />
+                          </div>
+                        )}
+                      </div>
+                      <div className="space-y-4">
+                        <h4 className="font-medium">Result Preview</h4>
+                        <Card className="p-4">
+                          {preview ? (
+                            <div className="space-y-2 text-sm">
+                              <div className="text-muted-foreground">Fair price range</div>
+                              <div className="text-2xl font-bold text-primary">${preview.priceRange.low} – ${preview.priceRange.high}</div>
+                              <div className="text-muted-foreground">Quoted</div>
+                              <div className="text-xl">${preview.quoted} <span className="text-xs opacity-70">({preview.assessment})</span></div>
+                              <div className="text-muted-foreground">Line items</div>
+                              {preview.items.map((li: any, i: number) => (
+                                <div key={i} className="flex justify-between">
+                                  <span>{li.description}</span>
+                                  <span>${li.amount}</span>
+                                </div>
+                              ))}
+                              <div className="pt-2">
+                                <Button onClick={() => setDemoOpen(true)}>See Full Interactive Demo</Button>
+                              </div>
+                            </div>
+                          ) : (
+                            <div className="text-muted-foreground">Run the demo to see a live preview.</div>
+                          )}
+                        </Card>
+                      </div>
                     </div>
-                  </div>
+                  ) : (
+                    <div className="space-y-8">
+                      <div className="text-center">
+                        <h3 className="text-xl font-medium mb-2">{demo.title}</h3>
+                        <p className="text-muted-foreground">Follow the simple 3-step process below</p>
+                      </div>
+                      <div className="grid md:grid-cols-3 gap-8">
+                        {demo.steps.map((step, index) => (
+                          <motion.div key={index} initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: index * 0.1 }} className="text-center group">
+                            <div className="relative mb-6">
+                              <div className="aspect-[4/3] rounded-xl overflow-hidden shadow-lg group-hover:shadow-xl transition-shadow">
+                                <ImageWithFallback src={"https://images.unsplash.com/photo-1666113604293-d34734339acb?auto=format&fit=crop&w=1080&q=80"} alt={step.image} className="w-full h-full object-cover" />
+                              </div>
+                              <div className="absolute -top-3 -left-3 w-8 h-8 bg-primary text-primary-foreground rounded-full flex items-center justify-center font-medium text-sm shadow-lg">{index + 1}</div>
+                            </div>
+                            <h4 className="text-lg font-medium mb-2">{step.title}</h4>
+                            <p className="text-muted-foreground text-sm leading-relaxed">{step.description}</p>
+                          </motion.div>
+                        ))}
+                      </div>
+                    </div>
+                  )}
                 </TabsContent>
               ))}
             </Tabs>
@@ -434,6 +498,7 @@ export function FeaturesDemo({ onGetStarted }: FeaturesDemoProps) {
 
       {/* Customer Testimonials */}
       <CustomerTestimonials variant="features" />
+      <DemoModal open={demoOpen} onClose={() => setDemoOpen(false)} onComplete={onDemoComplete} />
 
       {/* CTA Section */}
       <motion.div
